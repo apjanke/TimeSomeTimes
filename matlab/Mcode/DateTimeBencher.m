@@ -16,11 +16,13 @@ classdef DateTimeBencher
     % Number of times to run each basic operation in a benchmark.
     numIters = 10000
     % Display format.
-    fmt = '%-45s %.09f s\n';
+    fmt = '%-45s %s s\n';
     % Whether to display header in output.
     showHeader = true;
     % Sizes of datetime arrays to bench nonscalar ops on.
-    arraySizes (1,:) double = [100 10000]
+    arraySizes (1,:) double = [100 10000 30000]
+    % Max array size to run datevec tests on
+    maxArraySizeForDatevec = 10000;
   end
   
   methods (Static)
@@ -40,6 +42,10 @@ classdef DateTimeBencher
       end
       fprintf('Bench Matlab under %s on %s, %d iters:\n', ...
         ['R' version('-release')], computer, this.numIters);            
+    end
+    
+    function say(this, msg, etimePerIter)
+      fprintf(this.fmt, msg, formatEtime(etimePerIter));
     end
     
     function benchAll(this)
@@ -63,7 +69,7 @@ classdef DateTimeBencher
         dt.TimeZone = 'UTC';
       end
       te = toc(t0);
-      fprintf(this.fmt, 'zoned UTC datetime from UTC datenum:', te/N);
+      this.say('zoned UTC datetime from UTC datenum:', te/N);
 
       t0 = tic;
       dt = datetime(someRandomDatenum, 'ConvertFrom', 'datenum');
@@ -71,7 +77,7 @@ classdef DateTimeBencher
         dt.TimeZone = 'UTC';
       end
       te = toc(t0);
-      fprintf(this.fmt, 'set unzoned datetime to UTC zone:', te/N);
+      this.say('set unzoned datetime to UTC zone:', te/N);
       
     end
         
@@ -88,7 +94,7 @@ classdef DateTimeBencher
         x = now; 
       end
       te = toc(t0);
-      fprintf(this.fmt, 'current unzoned local time (datenum now):', te/N);
+      this.say('current unzoned local time (datenum now):', te/N);
       
       % datetime version
       t0 = tic;
@@ -96,7 +102,7 @@ classdef DateTimeBencher
         x = datetime; 
       end
       te = toc(t0);
-      fprintf(this.fmt, 'current unzoned local time (datetime):', te/N);
+      this.say('current unzoned local time (datetime):', te/N);
       
       % Current system time in local time, zoned
 
@@ -106,7 +112,7 @@ classdef DateTimeBencher
         x = now; 
       end
       te = toc(t0);
-      fprintf(this.fmt, 'current zoned local time (datenum now):', te/N);
+      this.say('current zoned local time (datenum now):', te/N);
       
       % datetime version
       t0 = tic;
@@ -114,7 +120,7 @@ classdef DateTimeBencher
         x = datetime('now', 'TimeZone', datetime.SystemTimeZone); 
       end
       te = toc(t0);
-      fprintf(this.fmt, 'current zoned local time (datetime):', te/N);
+      this.say('current zoned local time (datetime):', te/N);
       
       % Current system time in UTC
 
@@ -128,7 +134,7 @@ classdef DateTimeBencher
         dnum = (double(posixMillis) / (msecPerDay)) + unixEpochDatenum; 
       end
       te = toc(t0);
-      fprintf(this.fmt, 'current zoned UTC time (datenum):', te/N);
+      this.say('current zoned UTC time (datenum):', te/N);
       % Wow, this is actually really fast, compared to the datetime
       % version. Bummer!
       
@@ -138,7 +144,7 @@ classdef DateTimeBencher
         x = datetime('now', 'TimeZone','UTC'); 
       end
       te = toc(t0);
-      fprintf(this.fmt, 'current zoned UTC time (datetime):', te/N);
+      this.say('current zoned UTC time (datetime):', te/N);
       
       % Construct unzoned datetime object from raw time
       
@@ -149,24 +155,12 @@ classdef DateTimeBencher
         x = datetime(dnum, 'ConvertFrom', 'datenum'); 
       end
       te = toc(t0);
-      fprintf(this.fmt, 'unzoned object from raw time (datetime):', te/N);
+      this.say('unzoned object from raw time (datetime):', te/N);
 
       % Construct zoned datetime object from raw UTC time
       
       % Just pretend this is the known UTC time we care about
       utcDatenum = datenum(1966, 6, 14, 2, 3, 4);
-      
-      % datenum version - not really applicable! datenum doesn't know about zones!
-      % So I guess we could just say it's the identity transformation, and 
-      % the surrounding code just has to know from context that it's a UTC
-      % datenum.
-      % datetime version
-      t0 = tic;
-      for i = 1:N
-        x = utcDatenum; 
-      end
-      te = toc(t0);
-      fprintf(this.fmt, 'UTC raw time to object (datenum):', te/N);
       
       % datetime version
       t0 = tic;
@@ -175,7 +169,7 @@ classdef DateTimeBencher
         x.TimeZone = 'UTC';
       end
       te = toc(t0);
-      fprintf(this.fmt, 'UTC raw time to object (datetime):', te/N);
+      this.say('UTC raw time to object (datetime):', te/N);
       
       % datetime version 2
       t0 = tic;
@@ -183,7 +177,7 @@ classdef DateTimeBencher
         x = datetime(utcDatenum, 'ConvertFrom','datenum', 'TimeZone','UTC'); 
       end
       te = toc(t0);
-      fprintf(this.fmt, 'UTC raw time to object (datetime v2):', te/N);
+      this.say('UTC raw time to object (, ''TimeZone''):', te/N);
       
       % Construct zoned datetime object from raw local time
       
@@ -200,7 +194,7 @@ classdef DateTimeBencher
         x.TimeZone = systemTimeZone;
       end
       te = toc(t0);
-      fprintf(this.fmt, 'local raw time to object (datetime):', te/N);
+      this.say('local raw time to object (datetime):', te/N);
       
       % datetime version v2
       t0 = tic;
@@ -208,7 +202,7 @@ classdef DateTimeBencher
         x = datetime(localDatenum, 'ConvertFrom','datenum', 'TimeZone',systemTimeZone);
       end
       te = toc(t0);
-      fprintf(this.fmt, 'local raw time to object (datetime v2):', te/N);
+      this.say('local raw time to object (datetime v2):', te/N);
       
       % Zoned datetime object time zone "conversion"
       
@@ -222,7 +216,7 @@ classdef DateTimeBencher
         dt2.TimeZone = targetTz;
       end
       te = toc(t0);
-      fprintf(this.fmt, 'change time zone on zoned datetime:', te/N);
+      this.say('change time zone on zoned datetime:', te/N);
       
       % Note that an unzoned datetime is actually UTC
       
@@ -235,8 +229,65 @@ classdef DateTimeBencher
         utcDate.TimeZone = 'UTC';
       end
       te = toc(t0);
-      fprintf(this.fmt, 'say that unzoned datetime is UTC (datetime):', te/N);
+      this.say('say that unzoned datetime is UTC (datetime):', te/N);
 
+      for k = this.arraySizes
+        dnum = datenum(1966, 6, 14, 2, 3, 4);
+        dnums = dnum + [1:k]; %#ok<NBRAK>
+        
+        dnum = now;
+        t0 = tic;
+        for i = 1:N
+          x = datetime(dnums, 'ConvertFrom', 'datenum'); 
+        end
+        te = toc(t0);
+        this.say(sprintf('unzoned object from raw time (k=%d):', k), te/N);
+        fprintf('    per element: %s s\n', formatEtime(te/N/k));
+      end
+      
+      for k = this.arraySizes
+        dnum = datenum(1966, 6, 14, 2, 3, 4);
+        dnums = dnum + [1:k]; %#ok<NBRAK>
+
+        t0 = tic;
+        for i = 1:N
+          x = datetime(dnums, 'ConvertFrom','datenum', 'TimeZone','UTC'); 
+        end
+        te = toc(t0);
+        this.say(sprintf('UTC raw time to object (k=%d) (ctor):', k), te/N);
+        fprintf('    per element: %s s\n', formatEtime(te/N/k));
+      end
+
+      for k = this.arraySizes
+        dnum = datenum(1966, 6, 14, 2, 3, 4);
+        dnums = dnum + [1:k]; %#ok<NBRAK>
+        dts = datetime(dnums, 'ConvertFrom', 'datenum');
+
+        t0 = tic;
+        for i = 1:N
+          x = dts;
+          x.TimeZone = 'UTC';
+        end
+        te = toc(t0);
+        this.say(sprintf('set unzoned datetime to UTC zone (k=%d):', k), te/N);
+        fprintf('    per element: %s s\n', formatEtime(te/N/k));
+      end
+
+      for k = this.arraySizes
+        dnum = datenum(1966, 6, 14, 2, 3, 4);
+        dnums = dnum + [1:k]; %#ok<NBRAK>
+        dts = datetime(dnums, 'ConvertFrom', 'datenum');
+
+        t0 = tic;
+        for i = 1:N
+          dt2 = dts;
+          dt2.TimeZone = targetTz;
+        end
+        te = toc(t0);
+        this.say(sprintf('set unzoned datetime to local zone (k=%d):', k), te/N);
+        fprintf('    per element: %s s\n', formatEtime(te/N/k));
+      end
+      
     end
     
     function benchDatevec(this)
@@ -251,16 +302,18 @@ classdef DateTimeBencher
         dv = datevec(dnum);
       end
       te = toc(t0);
-      fprintf(this.fmt, 'datevec (datenum):', te/N);
+      this.say('datevec (datenum):', te/N);
       
       t0 = tic;
       for i = 1:N
         dv = datevec(dt);
       end
       te = toc(t0);
-      fprintf(this.fmt, 'datevec (datetime):', te/N);
+      this.say('datevec (datetime):', te/N);
       
-      for k = this.arraySizes
+      arrSizes = this.arraySizes;
+      arrSizes(arrSizes > this.maxArraySizeForDatevec) = [];
+      for k = arrSizes
         dnums = dnum + [1:k]; %#ok<NBRAK>
         dts = datetime(dnums, 'ConvertFrom', 'datenum');
 
@@ -269,16 +322,16 @@ classdef DateTimeBencher
           dv = datevec(dnums);
         end
         te = toc(t0);
-        fprintf(this.fmt, sprintf('datevec (1-by-%d) (datenum):', k), te/N);
-        fprintf('    per element: %.09f s\n', te/N/k);
+        this.say(sprintf('datevec (1-by-%d) (datenum):', k), te/N);
+        fprintf('    per element: %s s\n', formatEtime(te/N/k));
         
         t0 = tic;
         for i = 1:N
           dv = datevec(dts);
         end
         te = toc(t0);
-        fprintf(this.fmt, sprintf('datevec (1-by-%d) (datetime):', k), te/N);
-        fprintf('    per element: %.09f s\n', te/N/k);
+        this.say(sprintf('datevec (1-by-%d) (datetime):', k), te/N);
+        fprintf('    per element: %s s\n', formatEtime(te/N/k));
 
       end
       
@@ -293,14 +346,14 @@ classdef DateTimeBencher
         obj = DumbClassWithOneProperty;
       end
       te = toc(t0);
-      fprintf(this.fmt, 'construct object (one prop):', te/N);    
+      this.say('construct object (one prop):', te/N);    
 
       t0 = tic;
       for i = 1:N
         obj = SomeDumbClass;
       end
       te = toc(t0);
-      fprintf(this.fmt, 'construct object (larger):', te/N);    
+      this.say('construct object (larger):', te/N);    
 
       obj = SomeDumbClass;
       
@@ -309,30 +362,37 @@ classdef DateTimeBencher
         obj.foo = 42;
       end
       te = toc(t0);
-      fprintf(this.fmt, 'set property:', te/N);    
+      this.say('set property:', te/N);    
       
       t0 = tic;
       for i = 1:N
         obj.barWithSetter = 42;
       end
       te = toc(t0);
-      fprintf(this.fmt, 'set property with setter:', te/N);  
+      this.say('set property with setter:', te/N);  
       
       t0 = tic;
       for i = 1:N
         obj.charProperty = 'foo';
       end
       te = toc(t0);
-      fprintf(this.fmt, 'set validated char property:', te/N);
+      this.say('set validated char property:', te/N);
       
       t0 = tic;
       for i = 1:N
         obj.charvecProperty = 'foo';
       end
       te = toc(t0);
-      fprintf(this.fmt, 'set validated charvec property:', te/N);      
+      this.say('set validated charvec property:', te/N);      
     end
   
   end
   
 end
+
+function out = formatEtime(etime)
+str = sprintf('%0.09f', etime);
+ix = find(str == '.');
+out = [str(1:ix-1) '.' str(ix+(1:3)) '_' str(ix+(4:6)) '_' str(ix+(7:9))];
+end
+
