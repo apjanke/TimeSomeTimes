@@ -31,7 +31,7 @@ classdef DateTimeBencher
     
     function header(this)
       fprintf('Bench Matlab under %s on %s, %d iters:\n', ...
-        ['R' version('-release')], computer, N);            
+        ['R' version('-release')], computer, this.numIters);            
     end
     
     function benchRawUtcToDatetimeUtc(this)
@@ -239,7 +239,21 @@ classdef DateTimeBencher
         obj.barWithSetter = 42;
       end
       te = toc(t0);
-      fprintf(this.fmt, 'set property with setter:', te/N);      
+      fprintf(this.fmt, 'set property with setter:', te/N);  
+      
+      t0 = tic;
+      for i = 1:N
+        obj.charProperty = 'foo';
+      end
+      te = toc(t0);
+      fprintf(this.fmt, 'set validated char property:', te/N);
+      
+      t0 = tic;
+      for i = 1:N
+        obj.charvecProperty = 'foo';
+      end
+      te = toc(t0);
+      fprintf(this.fmt, 'set validated charvec property:', te/N);      
     end
   
   end

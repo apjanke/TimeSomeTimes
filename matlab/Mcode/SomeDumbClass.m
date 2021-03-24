@@ -3,6 +3,8 @@ classdef SomeDumbClass
   properties
     foo
     barWithSetter
+    charProperty char
+    charvecProperty (1,:) char
   end
   
   methods
