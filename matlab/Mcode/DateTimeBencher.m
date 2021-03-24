@@ -8,6 +8,8 @@ classdef DateTimeBencher
   %
   % DateTimeBencher.doIt
   
+  %#ok<*MANU>
+  
   properties
     % Number of times to run each basic operation in a benchmark.
     NumIters = 10000
@@ -23,6 +25,20 @@ classdef DateTimeBencher
   end
   
   methods
+    
+    function benchRawUtcToDatetimeUtc(this)
+      N = this.NumIters;
+      fmt = '%-45s %.06f s\n';
+      someRandomDatenum = datenum(1966, 6, 14, 2, 3, 4);
+      t0 = tic;
+      for i = 1:N
+        dt = datetime(someRandomDatenum, 'ConvertFrom', 'datenum');
+        dt.TimeZone = 'UTC';
+      end
+      te = toc(t0);
+      fprintf(fmt, 'zoned UTC datetime from UTC datenum:', te/N);      
+    end
+    
     
     function benchBasicDatetimeOps(this)
       % Benchmark some basic datetime ops and display results.
