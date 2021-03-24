@@ -33,7 +33,7 @@ classdef DateTimeBencher
       
       fmt = '%-45s %.06f s\n';
       
-      % Get current system time in local time, unzoned
+      % Current system time in local time, unzoned
 
       % datenum version
       t0 = tic;
@@ -51,7 +51,7 @@ classdef DateTimeBencher
       te = toc(t0);
       fprintf(fmt, 'current unzoned local time (datetime):', te/N);
       
-      % Get current system time in local time, zoned
+      % Current system time in local time, zoned
 
       % datenum version
       t0 = tic;
@@ -81,7 +81,7 @@ classdef DateTimeBencher
         dnum = (double(posixMillis) / (msecPerDay)) + unixEpochDatenum; %#ok<NASGU>
       end
       te = toc(t0);
-      fprintf(fmt, 'current UTC time (datenum):', te/N);
+      fprintf(fmt, 'current zoned UTC time (datenum):', te/N);
       % Wow, this is actually really fast, compared to the datetime
       % version. Bummer!
       
@@ -91,7 +91,7 @@ classdef DateTimeBencher
         x = datetime('now', 'TimeZone','UTC'); %#ok<NASGU>
       end
       te = toc(t0);
-      fprintf(fmt, 'current UTC time (datetime):', te/N);
+      fprintf(fmt, 'current zoned UTC time (datetime):', te/N);
       
       % Construct unzoned datetime object from raw time
       
