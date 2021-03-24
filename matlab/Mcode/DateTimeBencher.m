@@ -225,6 +225,20 @@ classdef DateTimeBencher
       N = this.numIters;
       this.header;
 
+      t0 = tic;
+      for i = 1:N
+        obj = DumbClassWithOneProperty; %#ok<NASGU>
+      end
+      te = toc(t0);
+      fprintf(this.fmt, 'construct object (one prop):', te/N);    
+
+      t0 = tic;
+      for i = 1:N
+        obj = SomeDumbClass; %#ok<NASGU>
+      end
+      te = toc(t0);
+      fprintf(this.fmt, 'construct object (larger):', te/N);    
+
       obj = SomeDumbClass;
       
       t0 = tic;
