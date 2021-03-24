@@ -3,6 +3,8 @@ import time
 
 N = 10000
 
+print(f'Bench Python, {N} iters:')
+
 def tic():
   return time.time()
 
