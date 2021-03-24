@@ -9,10 +9,13 @@ classdef DateTimeBencher
   % DateTimeBencher.doIt
   
   %#ok<*MANU>
-  
+  %#ok<*CTPCT>
+
   properties
     % Number of times to run each basic operation in a benchmark.
-    NumIters = 10000
+    numIters = 10000
+    % Display format
+    fmt = '%-45s %.09f s\n';
   end
   
   methods (Static)
@@ -26,28 +29,38 @@ classdef DateTimeBencher
   
   methods
     
+    function header(this)
+      fprintf('Bench Matlab under %s on %s, %d iters:\n', ...
+        ['R' version('-release')], computer, N);            
+    end
+    
     function benchRawUtcToDatetimeUtc(this)
-      N = this.NumIters;
-      fmt = '%-45s %.06f s\n';
+      this.header;
+      N = this.numIters;
       someRandomDatenum = datenum(1966, 6, 14, 2, 3, 4);
+      
       t0 = tic;
       for i = 1:N
         dt = datetime(someRandomDatenum, 'ConvertFrom', 'datenum');
         dt.TimeZone = 'UTC';
       end
       te = toc(t0);
-      fprintf(fmt, 'zoned UTC datetime from UTC datenum:', te/N);      
+      fprintf(this.fmt, 'zoned UTC datetime from UTC datenum:', te/N);
+
+      t0 = tic;
+      dt = datetime(someRandomDatenum, 'ConvertFrom', 'datenum');
+      for i = 1:N
+        dt.TimeZone = 'UTC';
+      end
+      te = toc(t0);
+      fprintf(this.fmt, 'set unzoned datetime to UTC zone:', te/N);
+      
     end
-    
-    
+        
     function benchBasicDatetimeOps(this)
       % Benchmark some basic datetime ops and display results.
-      N = this.NumIters;
-      
-      fprintf('Bench Matlab under %s on %s, %d iters:\n', ...
-        ['R' version('-release')], computer, N);
-      
-      fmt = '%-45s %.06f s\n';
+      N = this.numIters;
+      this.header;
       
       % Current system time in local time, unzoned
 
@@ -57,7 +70,7 @@ classdef DateTimeBencher
         x = now; %#ok<NASGU>
       end
       te = toc(t0);
-      fprintf(fmt, 'current unzoned local time (datenum now):', te/N);
+      fprintf(this.fmt, 'current unzoned local time (datenum now):', te/N);
       
       % datetime version
       t0 = tic;
@@ -65,7 +78,7 @@ classdef DateTimeBencher
         x = datetime; %#ok<NASGU>
       end
       te = toc(t0);
-      fprintf(fmt, 'current unzoned local time (datetime):', te/N);
+      fprintf(this.fmt, 'current unzoned local time (datetime):', te/N);
       
       % Current system time in local time, zoned
 
@@ -75,7 +88,7 @@ classdef DateTimeBencher
         x = now; %#ok<NASGU>
       end
       te = toc(t0);
-      fprintf(fmt, 'current zoned local time (datenum now):', te/N);
+      fprintf(this.fmt, 'current zoned local time (datenum now):', te/N);
       
       % datetime version
       t0 = tic;
@@ -83,7 +96,7 @@ classdef DateTimeBencher
         x = datetime('now', 'TimeZone', datetime.SystemTimeZone); %#ok<NASGU>
       end
       te = toc(t0);
-      fprintf(fmt, 'current zoned local time (datetime):', te/N);
+      fprintf(this.fmt, 'current zoned local time (datetime):', te/N);
       
       % Current system time in UTC
 
@@ -97,7 +110,7 @@ classdef DateTimeBencher
         dnum = (double(posixMillis) / (msecPerDay)) + unixEpochDatenum; %#ok<NASGU>
       end
       te = toc(t0);
-      fprintf(fmt, 'current zoned UTC time (datenum):', te/N);
+      fprintf(this.fmt, 'current zoned UTC time (datenum):', te/N);
       % Wow, this is actually really fast, compared to the datetime
       % version. Bummer!
       
@@ -107,7 +120,7 @@ classdef DateTimeBencher
         x = datetime('now', 'TimeZone','UTC'); %#ok<NASGU>
       end
       te = toc(t0);
-      fprintf(fmt, 'current zoned UTC time (datetime):', te/N);
+      fprintf(this.fmt, 'current zoned UTC time (datetime):', te/N);
       
       % Construct unzoned datetime object from raw time
       
@@ -118,7 +131,7 @@ classdef DateTimeBencher
         x = datetime(dnum, 'ConvertFrom', 'datenum'); %#ok<NASGU>
       end
       te = toc(t0);
-      fprintf(fmt, 'unzoned object from raw time (datetime):', te/N);
+      fprintf(this.fmt, 'unzoned object from raw time (datetime):', te/N);
 
       % Construct zoned datetime object from raw UTC time
       
@@ -135,7 +148,7 @@ classdef DateTimeBencher
         x = utcDatenum; %#ok<NASGU>
       end
       te = toc(t0);
-      fprintf(fmt, 'UTC raw time to object (datenum):', te/N);
+      fprintf(this.fmt, 'UTC raw time to object (datenum):', te/N);
       
       % datetime version
       t0 = tic;
@@ -144,7 +157,7 @@ classdef DateTimeBencher
         x.TimeZone = 'UTC';
       end
       te = toc(t0);
-      fprintf(fmt, 'UTC raw time to object (datetime):', te/N);
+      fprintf(this.fmt, 'UTC raw time to object (datetime):', te/N);
       
       % datetime version 2
       t0 = tic;
@@ -152,7 +165,7 @@ classdef DateTimeBencher
         x = datetime(utcDatenum, 'ConvertFrom','datenum', 'TimeZone','UTC'); %#ok<NASGU>
       end
       te = toc(t0);
-      fprintf(fmt, 'UTC raw time to object (datetime v2):', te/N);
+      fprintf(this.fmt, 'UTC raw time to object (datetime v2):', te/N);
       
       % Construct zoned datetime object from raw local time
       
@@ -169,7 +182,7 @@ classdef DateTimeBencher
         x.TimeZone = systemTimeZone;
       end
       te = toc(t0);
-      fprintf(fmt, 'local raw time to object (datetime):', te/N);
+      fprintf(this.fmt, 'local raw time to object (datetime):', te/N);
       
       % datetime version v2
       t0 = tic;
@@ -177,8 +190,7 @@ classdef DateTimeBencher
         x = datetime(localDatenum, 'ConvertFrom','datenum', 'TimeZone',systemTimeZone); %#ok<NASGU>
       end
       te = toc(t0);
-      fprintf(fmt, 'local raw time to object (datetime v2):', te/N);
-      
+      fprintf(this.fmt, 'local raw time to object (datetime v2):', te/N);
       
       % Zoned datetime object time zone "conversion"
       
@@ -192,7 +204,7 @@ classdef DateTimeBencher
         dt2.TimeZone = targetTz;
       end
       te = toc(t0);
-      fprintf(fmt, 'switch time zone (datetime):', te/N);
+      fprintf(this.fmt, 'change time zone on zoned datetime:', te/N);
       
       % Note that an unzoned datetime is actually UTC
       
@@ -205,8 +217,29 @@ classdef DateTimeBencher
         utcDate.TimeZone = 'UTC';
       end
       te = toc(t0);
-      fprintf(fmt, 'say that unzoned datetime is UTC (datetime):', te/N);
+      fprintf(this.fmt, 'say that unzoned datetime is UTC (datetime):', te/N);
 
+    end
+    
+    function benchDumbPropertySetting(this)
+      N = this.numIters;
+      this.header;
+
+      obj = SomeDumbClass;
+      
+      t0 = tic;
+      for i = 1:N
+        obj.foo = 42;
+      end
+      te = toc(t0);
+      fprintf(this.fmt, 'set property:', te/N);    
+      
+      t0 = tic;
+      for i = 1:N
+        obj.barWithSetter = 42;
+      end
+      te = toc(t0);
+      fprintf(this.fmt, 'set property with setter:', te/N);      
     end
   
   end
