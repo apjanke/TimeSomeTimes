@@ -10,12 +10,17 @@ classdef DateTimeBencher
   
   %#ok<*MANU>
   %#ok<*CTPCT>
+  %#ok<*NASGU>
 
   properties
     % Number of times to run each basic operation in a benchmark.
     numIters = 10000
-    % Display format
+    % Display format.
     fmt = '%-45s %.09f s\n';
+    % Whether to display header in output.
+    showHeader = true;
+    % Sizes of datetime arrays to bench nonscalar ops on.
+    arraySizes (1,:) double = [100 10000]
   end
   
   methods (Static)
@@ -30,8 +35,21 @@ classdef DateTimeBencher
   methods
     
     function header(this)
+      if ~this.showHeader
+        return
+      end
       fprintf('Bench Matlab under %s on %s, %d iters:\n', ...
         ['R' version('-release')], computer, this.numIters);            
+    end
+    
+    function benchAll(this)
+      this.header;
+      t = this;
+      t.showHeader = false;
+      t.benchBasicDatetimeOps;
+      t.benchRawUtcToDatetimeUtc;
+      t.benchDatevec;
+      t.benchDumbPropertySetting;
     end
     
     function benchRawUtcToDatetimeUtc(this)
@@ -67,7 +85,7 @@ classdef DateTimeBencher
       % datenum version
       t0 = tic;
       for i = 1:N
-        x = now; %#ok<NASGU>
+        x = now; 
       end
       te = toc(t0);
       fprintf(this.fmt, 'current unzoned local time (datenum now):', te/N);
@@ -75,7 +93,7 @@ classdef DateTimeBencher
       % datetime version
       t0 = tic;
       for i = 1:N
-        x = datetime; %#ok<NASGU>
+        x = datetime; 
       end
       te = toc(t0);
       fprintf(this.fmt, 'current unzoned local time (datetime):', te/N);
@@ -85,7 +103,7 @@ classdef DateTimeBencher
       % datenum version
       t0 = tic;
       for i = 1:N
-        x = now; %#ok<NASGU>
+        x = now; 
       end
       te = toc(t0);
       fprintf(this.fmt, 'current zoned local time (datenum now):', te/N);
@@ -93,7 +111,7 @@ classdef DateTimeBencher
       % datetime version
       t0 = tic;
       for i = 1:N
-        x = datetime('now', 'TimeZone', datetime.SystemTimeZone); %#ok<NASGU>
+        x = datetime('now', 'TimeZone', datetime.SystemTimeZone); 
       end
       te = toc(t0);
       fprintf(this.fmt, 'current zoned local time (datetime):', te/N);
@@ -107,7 +125,7 @@ classdef DateTimeBencher
       t0 = tic;
       for i = 1:N
         posixMillis = java.lang.System.currentTimeMillis;
-        dnum = (double(posixMillis) / (msecPerDay)) + unixEpochDatenum; %#ok<NASGU>
+        dnum = (double(posixMillis) / (msecPerDay)) + unixEpochDatenum; 
       end
       te = toc(t0);
       fprintf(this.fmt, 'current zoned UTC time (datenum):', te/N);
@@ -117,7 +135,7 @@ classdef DateTimeBencher
       % datetime version
       t0 = tic;
       for i = 1:N
-        x = datetime('now', 'TimeZone','UTC'); %#ok<NASGU>
+        x = datetime('now', 'TimeZone','UTC'); 
       end
       te = toc(t0);
       fprintf(this.fmt, 'current zoned UTC time (datetime):', te/N);
@@ -128,7 +146,7 @@ classdef DateTimeBencher
       dnum = now;
       t0 = tic;
       for i = 1:N
-        x = datetime(dnum, 'ConvertFrom', 'datenum'); %#ok<NASGU>
+        x = datetime(dnum, 'ConvertFrom', 'datenum'); 
       end
       te = toc(t0);
       fprintf(this.fmt, 'unzoned object from raw time (datetime):', te/N);
@@ -145,7 +163,7 @@ classdef DateTimeBencher
       % datetime version
       t0 = tic;
       for i = 1:N
-        x = utcDatenum; %#ok<NASGU>
+        x = utcDatenum; 
       end
       te = toc(t0);
       fprintf(this.fmt, 'UTC raw time to object (datenum):', te/N);
@@ -162,7 +180,7 @@ classdef DateTimeBencher
       % datetime version 2
       t0 = tic;
       for i = 1:N
-        x = datetime(utcDatenum, 'ConvertFrom','datenum', 'TimeZone','UTC'); %#ok<NASGU>
+        x = datetime(utcDatenum, 'ConvertFrom','datenum', 'TimeZone','UTC'); 
       end
       te = toc(t0);
       fprintf(this.fmt, 'UTC raw time to object (datetime v2):', te/N);
@@ -187,7 +205,7 @@ classdef DateTimeBencher
       % datetime version v2
       t0 = tic;
       for i = 1:N
-        x = datetime(localDatenum, 'ConvertFrom','datenum', 'TimeZone',systemTimeZone); %#ok<NASGU>
+        x = datetime(localDatenum, 'ConvertFrom','datenum', 'TimeZone',systemTimeZone);
       end
       te = toc(t0);
       fprintf(this.fmt, 'local raw time to object (datetime v2):', te/N);
@@ -221,20 +239,65 @@ classdef DateTimeBencher
 
     end
     
+    function benchDatevec(this)
+      N = this.numIters;
+      this.header;
+      
+      dnum = datenum(1966, 6, 14, 2, 3, 4);
+      dt = datetime(dnum, 'ConvertFrom', 'datenum');
+      
+      t0 = tic;
+      for i = 1:N
+        dv = datevec(dnum);
+      end
+      te = toc(t0);
+      fprintf(this.fmt, 'datevec (datenum):', te/N);
+      
+      t0 = tic;
+      for i = 1:N
+        dv = datevec(dt);
+      end
+      te = toc(t0);
+      fprintf(this.fmt, 'datevec (datetime):', te/N);
+      
+      for k = this.arraySizes
+        dnums = dnum + [1:k]; %#ok<NBRAK>
+        dts = datetime(dnums, 'ConvertFrom', 'datenum');
+
+        t0 = tic;
+        for i = 1:N
+          dv = datevec(dnums);
+        end
+        te = toc(t0);
+        fprintf(this.fmt, sprintf('datevec (1-by-%d) (datenum):', k), te/N);
+        fprintf('    per element: %.09f s\n', te/N/k);
+        
+        t0 = tic;
+        for i = 1:N
+          dv = datevec(dts);
+        end
+        te = toc(t0);
+        fprintf(this.fmt, sprintf('datevec (1-by-%d) (datetime):', k), te/N);
+        fprintf('    per element: %.09f s\n', te/N/k);
+
+      end
+      
+    end
+    
     function benchDumbPropertySetting(this)
       N = this.numIters;
       this.header;
 
       t0 = tic;
       for i = 1:N
-        obj = DumbClassWithOneProperty; %#ok<NASGU>
+        obj = DumbClassWithOneProperty;
       end
       te = toc(t0);
       fprintf(this.fmt, 'construct object (one prop):', te/N);    
 
       t0 = tic;
       for i = 1:N
-        obj = SomeDumbClass; %#ok<NASGU>
+        obj = SomeDumbClass;
       end
       te = toc(t0);
       fprintf(this.fmt, 'construct object (larger):', te/N);    
