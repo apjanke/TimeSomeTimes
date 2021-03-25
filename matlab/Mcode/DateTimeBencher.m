@@ -171,7 +171,7 @@ classdef DateTimeBencher
         x.TimeZone = 'UTC';
       end
       te = toc(t0);
-      this.say('UTC raw time to object (datetime):', te/N);
+      this.say('UTC raw time to object (.TZ = ...):', te/N);
       
       % datetime version 2
       t0 = tic;
@@ -196,7 +196,7 @@ classdef DateTimeBencher
         x.TimeZone = systemTimeZone;
       end
       te = toc(t0);
-      this.say('local raw time to object (datetime):', te/N);
+      this.say('local raw time to object (.TZ = ...):', te/N);
       
       % datetime version v2
       t0 = tic;
@@ -204,7 +204,7 @@ classdef DateTimeBencher
         x = datetime(localDatenum, 'ConvertFrom','datenum', 'TimeZone',systemTimeZone);
       end
       te = toc(t0);
-      this.say('local raw time to object (datetime v2):', te/N);
+      this.say('local raw time to object (, ''TimeZone''):', te/N);
       
       % Zoned datetime object time zone "conversion"
       
