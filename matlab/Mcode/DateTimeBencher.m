@@ -6,7 +6,9 @@ classdef DateTimeBencher
   %
   % Examples:
   %
-  % DateTimeBencher.doIt
+  % dtb = DateTimeBencher;
+  % dtb.benchAll;
+  % dtb.showStorageSizes;
   
   %#ok<*MANU>
   %#ok<*CTPCT>
@@ -20,7 +22,7 @@ classdef DateTimeBencher
     % Whether to display header in output.
     showHeader = true;
     % Sizes of datetime arrays to bench nonscalar ops on.
-    arraySizes (1,:) double = [100 10000 30000]
+    arraySizes (1,:) double = [100 10000]
     % Max array size to run datevec tests on
     maxArraySizeForDatevec = 10000;
   end
@@ -288,6 +290,22 @@ classdef DateTimeBencher
         fprintf('    per element: %s s\n', formatEtime(te/N/k));
       end
       
+      % Simulate numeric part of epoch conversion
+      for k = this.arraySizes
+        dnum = datenum(1966, 6, 14, 2, 3, 4);
+        dnums = dnum + [1:k]; %#ok<NBRAK>
+        epochOffset = 420; % I made this up
+        scale = 3.14; % I made this up too
+        
+        t0 = tic;
+        for i = 1:N
+          x = (dnums * scale) - epochOffset;
+        end
+        te = toc(t0);
+        this.say(sprintf('numeric epoch conversion (k=%d):', k), te/N);
+        fprintf('    per element: %s s\n', formatEtime(te/N/k));
+      end
+        
     end
     
     function benchDatevec(this)
@@ -386,6 +404,32 @@ classdef DateTimeBencher
       this.say('set validated charvec property:', te/N);      
     end
   
+    function showStorageSizes(this)
+      ops = [
+        "datetime"
+        "datetime('now')"
+        "datetime('now', 'TimeZone','UTC')"
+        "datetime('now', 'TimeZone','America/Chicago')"
+        "datetime(420, 'ConvertFrom', 'datenum')"
+        "datetime(2000, 1, 1)"
+        "datetime(2000, 1, 1, 1, 2, 3)"
+        "NaT"
+        "zonedNaT('UTC')"
+        ];
+      szs = NaN(size(ops));
+      dataSzs = NaN(size(ops));
+      for i = 1:numel(ops)
+        dt = eval(ops(i));
+        szs(i) = sizeInBytes(dt);
+        dataSzs(i) = rawDatetimeStorageSize(dt);
+      end
+      tbl = table(ops, szs, dataSzs, ...
+        'VariableNames',{'Operation','SizeInBytes','DataSizeBytes'});
+      fprintf('Sizes in Matlab under %s on %s:\n', ...
+        ['R' version('-release')], computer);            
+      display(tbl);
+    end
+    
   end
   
 end
@@ -396,3 +440,20 @@ ix = find(str == '.');
 out = [str(1:ix-1) '.' str(ix+(1:3)) '_' str(ix+(4:6)) '_' str(ix+(7:9))];
 end
 
+function out = rawDatetimeStorageSize(dt)
+origWarn = warning;
+RAII.warn = onCleanup(@() warning(origWarn));
+warning off MATLAB:structOnObject
+s = builtin('struct', dt);
+out = sizeInBytes(s.data);
+end
+
+function out = sizeInBytes(x) %#ok<INUSD>
+w = whos;
+out = w.bytes;
+end
+
+function out = zonedNaT(timeZone)
+out = NaT;
+out.TimeZone = timeZone;
+end
