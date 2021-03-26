@@ -2,6 +2,8 @@
 
 Benchmarks for datetime construction in various languages
 
+!["Get in loser, we're going benchmarking!"](get-in-loser-were-going-benchmarking.png)
+
 This repo contains some super-simple benchmarks for timing basic datetime object construction and time zone conversion in various languages. It was written to support my MathWorks Technical Support case #04794314 "datetime('now', 'TimeZone',...) and datetime.SystemTimeZone are slow".
 
 Apologies to the MathWorks Tech Support staff; I had been drinking when I filed this bug report.
