@@ -165,7 +165,7 @@ classdef DateTimeBencher
         x = datetime(dnum, 'ConvertFrom', 'datenum'); 
       end
       te = toc(t0);
-      this.say('unzoned object from raw time (datetime):', te/N);
+      this.say('raw time to unzoned object (datetime):', te/N);
 
       % Construct zoned datetime object from raw UTC time
       
@@ -239,8 +239,28 @@ classdef DateTimeBencher
         utcDate.TimeZone = 'UTC';
       end
       te = toc(t0);
-      this.say('set unzoned datetime to UTC (datetime):', te/N);
+      this.say('set unzoned datetime to UTC zone:', te/N);
 
+      t0 = tic;
+      for i = 1:N
+        utcDate = unzonedDate;
+        utcDate.TimeZone = targetTz;
+      end
+      te = toc(t0);
+      this.say('set unzoned datetime to local zone:', te/N);
+
+      % Simulate numeric part of epoch conversion
+      dnum = datenum(1966, 6, 14, 2, 3, 4);
+      epochOffset = 420; % I made this up
+      scale = 3.14; % I made this up too
+      
+      t0 = tic;
+      for i = 1:N
+        x = (dnum * scale) - epochOffset;
+      end
+      te = toc(t0);
+      this.say('numeric epoch conversion:', te/N);
+      
       for k = this.arraySizes
         dnum = datenum(1966, 6, 14, 2, 3, 4);
         dnums = dnum + [1:k]; %#ok<NBRAK>
