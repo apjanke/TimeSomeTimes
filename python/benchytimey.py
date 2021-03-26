@@ -35,7 +35,7 @@ t0 = tic()
 for i in range(0, N):
   dt = datetime.now()
 te = toc(t0)
-say('current zoned local time', te/N)
+say('current unzoned local time', te/N)
 
 # Current system time in local zone
 
