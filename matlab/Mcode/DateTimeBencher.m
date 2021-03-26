@@ -126,6 +126,14 @@ classdef DateTimeBencher
       
       % Current system time in UTC
 
+      % Java version
+      t0 = tic;
+      for i = 1:N
+        x = java.lang.System.currentTimeMillis;
+      end
+      te = toc(t0);
+      this.say('current UTC local time (call Java):', te/N);
+      
       % datenum version: oh crap, how do we do this? Guess we have to drop
       % down to Java
       msecPerDay = 1000 * 60 * 60 * 24;
@@ -136,7 +144,7 @@ classdef DateTimeBencher
         dnum = (double(posixMillis) / (msecPerDay)) + unixEpochDatenum; 
       end
       te = toc(t0);
-      this.say('current zoned UTC time (datenum):', te/N);
+      this.say('current zoned UTC time (Java to datenum):', te/N);
       % Wow, this is actually really fast, compared to the datetime
       % version. Bummer!
       
@@ -231,7 +239,7 @@ classdef DateTimeBencher
         utcDate.TimeZone = 'UTC';
       end
       te = toc(t0);
-      this.say('say that unzoned datetime is UTC (datetime):', te/N);
+      this.say('set unzoned datetime to UTC (datetime):', te/N);
 
       for k = this.arraySizes
         dnum = datenum(1966, 6, 14, 2, 3, 4);
@@ -247,6 +255,22 @@ classdef DateTimeBencher
         fprintf('    per element: %s s\n', formatEtime(te/N/k));
       end
       
+      % Simulate numeric part of epoch conversion
+      for k = this.arraySizes
+        dnum = datenum(1966, 6, 14, 2, 3, 4);
+        dnums = dnum + [1:k]; %#ok<NBRAK>
+        epochOffset = 420; % I made this up
+        scale = 3.14; % I made this up too
+        
+        t0 = tic;
+        for i = 1:N
+          x = (dnums * scale) - epochOffset;
+        end
+        te = toc(t0);
+        this.say(sprintf('numeric epoch conversion (k=%d):', k), te/N);
+        fprintf('    per element: %s s\n', formatEtime(te/N/k));
+      end
+        
       for k = this.arraySizes
         dnum = datenum(1966, 6, 14, 2, 3, 4);
         dnums = dnum + [1:k]; %#ok<NBRAK>
@@ -290,22 +314,19 @@ classdef DateTimeBencher
         fprintf('    per element: %s s\n', formatEtime(te/N/k));
       end
       
-      % Simulate numeric part of epoch conversion
       for k = this.arraySizes
         dnum = datenum(1966, 6, 14, 2, 3, 4);
-        dnums = dnum + [1:k]; %#ok<NBRAK>
-        epochOffset = 420; % I made this up
-        scale = 3.14; % I made this up too
-        
+        dtUtc = datetime(dnum, 'ConvertFrom', 'datenum', 'TimeZone','UTC');
+
         t0 = tic;
         for i = 1:N
-          x = (dnums * scale) - epochOffset;
+          dt2 = dtUtc;
+          dt2.TimeZone = targetTz;
         end
         te = toc(t0);
-        this.say(sprintf('numeric epoch conversion (k=%d):', k), te/N);
+        this.say(sprintf('change time zone on zoned datetime (k=%d):', k), te/N);
         fprintf('    per element: %s s\n', formatEtime(te/N/k));
       end
-        
     end
     
     function benchDatevec(this)
