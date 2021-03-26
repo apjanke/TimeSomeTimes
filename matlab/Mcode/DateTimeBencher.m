@@ -356,6 +356,7 @@ classdef DateTimeBencher
       dnum = datenum(1966, 6, 14, 2, 3, 4);
       dt = datetime(dnum, 'ConvertFrom', 'datenum');
       
+      % datenum
       t0 = tic;
       for i = 1:N
         dv = datevec(dnum);
@@ -363,18 +364,46 @@ classdef DateTimeBencher
       te = toc(t0);
       this.say('datevec (datenum):', te/N);
       
+      % unzoned datetime
       t0 = tic;
       for i = 1:N
         dv = datevec(dt);
       end
       te = toc(t0);
-      this.say('datevec (datetime):', te/N);
+      this.say('datevec (unzoned datetime):', te/N);
+      
+      % unzoned datetime to datenum
+      t0 = tic;
+      for i = 1:N
+        dv = datevec(datenum(dt));
+      end
+      te = toc(t0);
+      this.say('datevec (datenum(datetime)):', te/N);
+      
+      % UTC zoned datetime
+      dtUtc = dt;
+      dtUtc.TimeZone = 'UTC';
+      t0 = tic;
+      for i = 1:N
+        dv = datevec(dtUtc);
+      end
+      te = toc(t0);
+      this.say('datevec (UTC zoned datetime):', te/N);
+      
+      % unzoned datetime
+      t0 = tic;
+      dtLocal = dt;
+      dtLocal.TimeZone = 'America/Chicago';
+      for i = 1:N
+        dv = datevec(dtLocal);
+      end
+      te = toc(t0);
+      this.say('datevec (local zoned datetime):', te/N);
       
       arrSizes = this.arraySizes;
       arrSizes(arrSizes > this.maxArraySizeForDatevec) = [];
       for k = arrSizes
         dnums = dnum + [1:k]; %#ok<NBRAK>
-        dts = datetime(dnums, 'ConvertFrom', 'datenum');
 
         t0 = tic;
         for i = 1:N
@@ -383,15 +412,32 @@ classdef DateTimeBencher
         te = toc(t0);
         this.say(sprintf('datevec (1-by-%d) (datenum):', k), te/N);
         fprintf('    per element: %s s\n', formatEtime(te/N/k));
-        
+      end
+      
+      for k = arrSizes
+        dnums = dnum + [1:k]; %#ok<NBRAK>
+        dts = datetime(dnums, 'ConvertFrom', 'datenum');
+
         t0 = tic;
         for i = 1:N
           dv = datevec(dts);
         end
         te = toc(t0);
-        this.say(sprintf('datevec (1-by-%d) (datetime):', k), te/N);
+        this.say(sprintf('datevec (1-by-%d) (unzoned datetime):', k), te/N);
         fprintf('    per element: %s s\n', formatEtime(te/N/k));
+      end
+      
+      for k = arrSizes
+        dnums = dnum + [1:k]; %#ok<NBRAK>
+        dts = datetime(dnums, 'ConvertFrom', 'datenum');
 
+        t0 = tic;
+        for i = 1:N
+          dv = datevec(datenum(dts));
+        end
+        te = toc(t0);
+        this.say(sprintf('datevec (1-by-%d) (datenum(datetime)):', k), te/N);
+        fprintf('    per element: %s s\n', formatEtime(te/N/k));
       end
       
     end
